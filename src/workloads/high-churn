@@ -1,0 +1,22 @@
+nodes 5
+duration 600
+
+#############
+profile prof0
+
+join exact 5
+leave none
+put poissonrandom 50 10 10
+get poissonrandom 50 10 10
+
+#############
+profile prof1
+
+join now 15-80
+leave weibullrandom 1 0.56 97.62
+put poissonrandom 50 10 80
+get poissonrandom 50 10 80
+
+#############
+default-profile prof1
+node 0 prof0

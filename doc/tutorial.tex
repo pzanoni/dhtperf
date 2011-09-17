@@ -1,0 +1,303 @@
+\documentclass[compress]{beamer}
+
+%\usetheme{Warsaw}
+\usetheme{Singapore}
+%\usecolortheme{rose}
+%\useinnertheme{rounded}
+
+\usepackage[utf8]{inputenc}
+\usepackage[brazil]{babel}
+
+%\usepackage{listings}
+
+\newcommand{\dhtperf}{\texttt{dhtperf}}
+
+\title[\dhtperf{} tutorial]{\dhtperf{} tutorial\\Performance evaluation for
+\emph{real} Distributed Hash Tables}
+\author{Paulo Ricardo Zanoni}
+\institute{UFPR -- Universidade Federal do Paraná}
+\date{2010}
+
+
+\AtBeginSection[]
+{
+    \begin{frame}<beamer>
+        \frametitle{Contents}
+        \tableofcontents[currentsection]
+    \end{frame}
+}
+
+\begin{document}
+
+\begin{frame}
+\titlepage
+\end{frame}
+
+%\begin{frame}{Contents}
+%\tableofcontents
+%\end{frame}
+
+\begin{frame}{Disclaimer}
+This documentation is a little bit OLD. It still describes most of dhtperf, but
+some details might have changed.
+\end{frame}
+
+\section{Introduction}
+\begin{frame}{What is \dhtperf?}
+\dhtperf{} is:
+\begin{itemize}
+    \item a framework for measuring DHT performance
+    \item intended for real-world DHTs (i.e., \emph{not} simulation)
+    \item a tool for applying \emph{workloads} to DHTs and obtaining
+    \emph{metrics}
+    \item a \emph{wrapper} for existing DHT software
+    \item extensible software
+    \item free software (GPLv3+)
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Design goals}
+The software should be...
+\begin{itemize}
+    \item extensibile: easy to add new DHT backends, workload profiles and
+    new metrics
+    \item modular: extending is as easy as implementing a class
+    \item available: free to download and modify as in GPLv3+
+    \item scalable: as scalable as the backend DHT
+    \item usable: documented, unlike some DHT simulators
+    \item portable: whenever possible, the code uses portable functions
+    (although I only test on Linux)
+    \item non-intrusive: \emph{wrap} and \emph{use} existing DHT software,
+    don't modify
+\end{itemize}
+\end{frame}
+
+\begin{frame}{The little pieces}
+\begin{itemize}
+    \item \texttt{dhtperf-master:} controls the performance tests, coordinates
+    the controllers, one instance per test
+    \item \texttt{dhtperf-controller:} controls a DHT node, collects the metrics
+    data, one instance per DHT node
+    \item \emph{the protocol:} messages exchanged between the
+    \texttt{dhtperf-master} and the \texttt{dhtperf-controllers}
+    \item \emph{workload file:} contains the number of nodes, duration of the
+    tests and one or more \emph{node profiles}
+    \item \emph{node profile:} describes how a node should behave during the
+    performance test
+    \item \emph{metrics:} things to be measured by the \emph{controller} while
+    the test is running
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Figure}
+(insert cool image containing the dhtperf-master, dhtperf-controller, the
+protocol, the workload file, and the node profiles)
+\end{frame}
+
+%\begin{frame}{}
+%\begin{itemize}
+%\end{itemize}
+%\end{frame}
+\section{Using}
+
+\subsection{Obtaining and installing}
+\begin{frame}{Obtaining}
+You'll need:
+\begin{itemize}
+    \item the latest release from \url{http://foo.bar} or a \texttt{git
+    clone}\footnote{\url{http://git-scm.com}}
+    of the development snapshot from \url{git://gitorious.org/foobarbaz}
+    \item a C++ compiler
+    \item cmake \footnote{\url{http://www.cmake.org}}
+    \item libboost \footnote{\url{http://www.boost.org}}
+    \item latex-beamer if you want to build the documentation
+    \footnote{\url{http://bitbucket.org/rivanvx/beamer/}}
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Installing}
+To compile:
+\begin{itemize}
+    \item \texttt{cd} into the source
+    \item \texttt{mkdir build; cd build}
+    \item \texttt{cmake ..}
+    \item \texttt{make}
+\end{itemize}
+For more building options, check the README file.
+\end{frame}
+
+\subsection{Running}
+\begin{frame}{Running}
+Short version:
+\begin{itemize}
+    \item write the \emph{workload file}
+    \item \texttt{./dhtperf-master -w workload-file}
+    \item for each DHT node, \texttt{./dhtperf-controller -d dhtUsed
+    masterHostName}
+    \item watch the output
+    \item \texttt{ls dhtperf-results}
+\end{itemize}
+\end{frame}
+
+\subsection{The workload file}
+\begin{frame}{Workload file}
+nodes 5\\
+duration 60\\
+\#\\
+profile prof1\\
+\# profile definition goes here, see the next slide\\
+profile prof2\\
+\# (...)\\
+profile prof3\\
+\# (...)\\
+\# associate nodes with profiles:\\
+default-profile prof1\\
+node 0 prof2\\
+node 2 prof3
+\end{frame}
+
+\begin{frame}{Profiles}
+\begin{columns}[c]
+\column{0.5\textwidth}
+profile prof1\\
+join exact 10\\
+leave exact 30\\
+put none\\
+get exact 20 key 25 key2 \textbackslash \\
+26 key3 28 key
+\column{0.5\textwidth}
+profile prof2\\
+join exact 3\\
+leave exact 35\\
+put exact 6 key value\\
+get poisson 3 4 34\\
+\end{columns}
+\end{frame}
+
+\begin{frame}{Profiles II}
+Profiles:
+\begin{itemize}
+    \item every \emph{node profile} has 4 profiles: \texttt{join},
+    \texttt{leave}, \texttt{put} and \texttt{get}
+    \item every profile has a name (\texttt{exact}, \texttt{none},
+    \texttt{poisson}, etc.) and as many arguments as it needs
+    \item check the documentation for the arguments
+    \item the idea is that it should be easy to create new profiles: just
+    implement a new class that inherits from another, filling the necessary
+    functions
+\end{itemize}
+\end{frame}
+
+\subsection{Running the commands}
+
+\begin{frame}{Running the commands}
+First you'll need to start the master:
+\begin{itemize}
+    \item \texttt{./dhtperf-master -w workload-file}
+\end{itemize}
+
+Then you should start every controller. We recommend a script that does
+\texttt{ssh} and runs the command.
+\begin{itemize}
+    \item \texttt{./dhtperf-controller -d dhtUsed masterHostName}
+\end{itemize}
+
+The controllers will then contact the masters and do everything on their own.
+
+It \emph{is} possible to run the controllers in the same machine as the master.
+You can call that \emph{emulation}.
+\end{frame}
+
+\subsection{Checking the output}
+\begin{frame}{Checking the output}
+After the test ends the controllers will pass the data to the master, who
+will process it and write the results into the \texttt{dhtperf-output}
+directory. Check it and enjoy =)
+\end{frame}
+
+\section{The workflow}
+\begin{frame}{The workflow}
+\begin{itemize}
+    \item the \texttt{dhtperf-master} is a single-threaded TCP server
+    \item after you launch it, it parses the workload file and then starts
+    accepting connections
+    \item when you start a \texttt{dhtperf-controller}, it tries to open a TCP
+    connection with the \emph{master}
+    \item the first node to connect the master will be \emph{node $0$} and so
+    on (for the purpose of assigning profiles)
+    \item after connecting, the \emph{controller} sends a
+    \texttt{GetProfileQuery} message, which is replied with a
+    \texttt{GetProfileReply} message.
+\end{itemize}
+\end{frame}
+\begin{frame}{The workflow II}
+\begin{itemize}
+    \item after every node has started and sent a \texttt{GetProfileQuery}, the
+    \emph{master} sends a \texttt{Start} message to every node, starting the
+    performance test
+    \item no more messages are exchanged until the end of the execution
+    % XXX: cabe mais aqui!
+\end{itemize}
+\end{frame}
+
+\begin{frame}{The workflow III}
+\begin{itemize}
+    \item TODO
+\end{itemize}
+\end{frame}
+
+\section{Hacking}
+
+\subsection{The protocol}
+\begin{frame}{The protocol}
+The \texttt{protocol.h} file contains the protocol definitions:
+\begin{itemize}
+    \item every protocol message is a class that inherits the
+    \texttt{dhtperfproto::message::Message} base class
+    \item every message is made of two parts: the header and the body
+    \item the header contains only the opcode and the size of the body
+    \item the body's contents is specific to each message
+    \item the protocol is binary, not plain-text
+\end{itemize}
+\end{frame}
+
+\subsection{Adding a new DHT}
+\begin{frame}{Adding a new DHT}
+The code that deals with specific DHTs is inside \texttt{controller/dhtnodes/}.
+\begin{itemize}
+    \item every DHT node inherits the DhtNode class
+    \item the DhtNode class already has some useful code, so the inherited
+    class only needs to implement a few functions
+    \item check the DummyDht class for an easy example
+\end{itemize}
+\end{frame}
+
+\subsection{Adding a new profile}
+\begin{frame}{Adding a new profile}
+\begin{itemize}
+    \item to add a new profile, you'll have to create a class that inherits from
+    one of: \texttt{JoinProfile}, \texttt{LeaveProfile}, \texttt{PutProfile} or
+    \texttt{GetProfile} (see the code inside \texttt{controller/profiles/})
+    \item note that all of these classes inherit from the
+    \texttt{GenericProfile} class
+    \item internally, every class has an \texttt{EventQueue} of one of the
+    \texttt{DhtEvent} classes (see the \texttt{events.h} file)
+\end{itemize}
+\end{frame}
+
+\subsection{Adding a new metric}
+\begin{frame}{Adding a new metric}
+TODO
+\end{frame}
+
+\section{Conclusion}
+\begin{frame}{Conclusion}
+Now that you understand a little bit about \dhtperf{}, try to run it.
+
+Start with the included workload files, they're small.
+
+Wrote a patch? Has a contribution? A complaint? Is the code horribly unusable?
+Please send feedback! Write to \url{paulo@c3sl.ufpr.br}.
+\end{frame}
+
+\end{document}

@@ -1,0 +1,12 @@
+diff -Nrup openchord//src/de/uniba/wiai/lspi/util/console/ConsoleThread.java patched-openchord//src/de/uniba/wiai/lspi/util/console/ConsoleThread.java
+--- openchord//src/de/uniba/wiai/lspi/util/console/ConsoleThread.java	2008-04-11 17:48:58.000000000 -0300
++++ patched-openchord//src/de/uniba/wiai/lspi/util/console/ConsoleThread.java	2011-02-26 14:38:41.412379631 -0300
+@@ -222,7 +222,7 @@ public class ConsoleThread extends Threa
+ 		boolean running = true;
+ 		this.out.println("Console ready. ");
+ 		while (running) {
+-			this.out.print(this.consoleName + " > ");
++			this.out.println(this.consoleName + " >");
+ 			try {
+ 				BufferedReader reader = new BufferedReader(
+ 						new InputStreamReader(System.in));

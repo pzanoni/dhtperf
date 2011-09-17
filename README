@@ -1,0 +1,10 @@
+If you're new to dhtperf and want to learn the basics, please check
+doc/tutorial.pdf: it should get you started with the basic concepts.
+
+How to compile:
+
+cd src
+mkdir build
+cd build
+cmake ..
+make

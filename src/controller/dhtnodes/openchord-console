@@ -1,0 +1,21 @@
+#!/bin/bash
+
+if [ -z "$OC_DIR" ]; then
+    OC_DIR=$HOME/mestrado/openchord
+fi
+
+#PID=""
+#
+#function cleanup() {
+#    if [ ! -z $PID ]; then
+#	kill -9 $PID
+#    fi
+#    exit 0
+#}
+
+#trap cleanup SIGTERM
+
+exec java -cp ${OC_DIR}:${OC_DIR}/build/classes:${OC_DIR}/config:${OC_DIR}/lib/log4j.jar de.uniba.wiai.lspi.chord.console.Main
+#PID=$!
+
+#wait

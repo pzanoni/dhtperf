@@ -1,0 +1,5 @@
+[updates-local]
+name=Dhtperf packages for Fedora 8 and PlanetLab
+baseurl=http://www.inf.ufpr.br/paulo/planetlab
+enabled=1
+gpgcheck=0

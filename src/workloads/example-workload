@@ -1,0 +1,56 @@
+# Arguments for the profiles:
+# join exact:  (time)*
+# leave exact: (time)*
+# put exact:   (time key value)*
+# get exact:   (time key)*
+# put ntimesrandom: setSize (time repetitions)*
+# get ntimesrandom: setSize (time repetitions)*
+# put poissonrandom: setSize lambda timeBegin
+# get poissonrandom: setSize lambda timeBegin
+# put weibullrandom: setSize shape scale timeBegin
+# get weibullrandom: setSize shape scale timeBegin
+# put fulldictionary: setSize (time)*
+# get fulldictionary: setSize (time)*
+
+# number of nodes to be emulated:
+nodes 2
+duration 40
+
+#############
+profile prof1
+
+join exact 8-12
+leave exact 30
+put none
+get fulldictionary 25 20
+#get weibullrandom 10 5.0 2.0 20
+#put poissonrandom 10 5 15
+#get poissonrandom 10 3 15
+#put ntimesrandom 10 20 25
+#get exact 20 key  \
+#	  25 key2 \
+#	  29 key
+#put none
+#get none
+
+#############
+profile prof2
+
+join exact 3
+leave exact 35
+put fulldictionary 20 15
+get none
+#put poissonrandom 10 3 5
+#get poissonrandom 10 5 15
+#put exact  6 key  value \
+#	  12 key2 value2 \
+#	  33 key3 value3
+#get ntimesrandom 10 25 10
+#put none
+#get none
+
+# associate nodes with profiles:
+# syntax: node $id $profile
+default-profile prof1
+node 0 prof2
+

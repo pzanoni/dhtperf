@@ -1,0 +1,13 @@
+Index: src/maidsafe/tests/demo/commands.cc
+===================================================================
+--- src/maidsafe/tests/demo/commands.cc	(revisão 658)
++++ src/maidsafe/tests/demo/commands.cc	(cópia de trabalho)
+@@ -59,7 +59,7 @@
+   bool wait = false;
+   boost::mutex wait_mutex;
+   while (!finish_) {
+-    std::cout << "demo > ";
++    std::cout << "demo >\n";
+     std::string cmdline;
+     std::getline(std::cin, cmdline);
+     ProcessCommand(cmdline, &wait);

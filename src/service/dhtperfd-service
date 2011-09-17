@@ -1,0 +1,61 @@
+#!/bin/bash
+
+# chkconfig: 2345 55 25
+# description: Tool to assist starting/stopping dhtperf experiments
+# processname: dhtperfd
+
+### BEGIN INIT INFO
+# Provides: dhtperfd
+# Required-Start: $local_fs $network
+# Required-Stop: $local_fs $network
+# Should-Start:
+# Short-Description: Tool to assist start/stopping dhtperf experiments
+# Description: It listens to start/stop messages over the network
+### END INIT INFO
+
+. /etc/rc.d/init.d/functions
+
+prog=dhtperfd
+lockfile=/var/lock/subsys/dhtperfd
+pidfile=/var/run/dhtperfd.pid
+
+start() {
+    echo -n "Starting $prog"
+    daemon --pidfile $pidfile $prog -d
+    RETVAL=$?
+    echo
+    if [ $RETVAL = 0 ]; then
+	touch $lockfile
+    	pid=$(pidofproc $prog)
+	echo $pid > $pidfile
+    fi
+}
+
+stop() {
+    echo -n "Stopping $prog"
+    killproc -p $pidfile $prog
+    RETVAL=$?
+    echo
+    rm -f $pidfile $lockfile
+}
+
+case $1 in
+    start)
+	start
+	;;
+    stop)
+	stop
+	;;
+    restart)
+	stop
+	start
+	;;
+    status)
+    	status -p $pidfile $prog
+	;;
+    *)
+	echo "Usage: $0 {start|stop|restart|status}"
+	RETVAL=3
+esac
+
+exit $RETVAL

@@ -1,0 +1,5 @@
+#!/bin/bash
+
+DHTPERF_DATA="/usr/share/dhtperf/openchord"
+
+exec java -cp ${DHTPERF_DATA}/log4j.jar -jar ${DHTPERF_DATA}/openchord_1.0.5.jar

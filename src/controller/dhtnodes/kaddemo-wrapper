@@ -1,0 +1,158 @@
+#!/usr/bin/ruby
+
+# WARNING:
+# This binary relies on a MODIFIED version of kaddemo_static that prints
+# "demo >\n" instead of "demo > " when waiting for user input.
+
+require 'fileutils'
+require 'socket'
+
+require 'generic-wrapper'
+
+class KaddemoWrapper < GenericWrapper
+    def initialize (entry_point_host, entry_point_port, self_port)
+
+	binary_name = "kaddemo_static"
+	super(entry_point_host, entry_point_port, self_port, binary_name,
+	      "demo >")
+
+	stdout_name = "stdout.txt"
+	stderr_name = "stderr.txt"
+	@self_id = nil
+	@entry_point_id = nil
+	@entry_point_wrapper_port = @entry_point_port + 1
+	@self_wrapper_port = @self_port + 1
+
+	if entry_point_host.nil?
+	    # create dht
+	    start_wrapper_server
+	    my_ip_raw = Socket.gethostbyname(Socket.gethostname)[3]
+	    my_ip = "#{my_ip_raw[0]}.#{my_ip_raw[1]}.#{my_ip_raw[2]}." +
+		    "#{my_ip_raw[3]}"
+	    args = "-p #{@self_port} "             +
+		   "--externalport #{@self_port} " +
+		   "--externalip #{my_ip}"
+	else
+	    ip_raw = Socket.gethostbyname(entry_point_host)[3]
+	    @entry_point_ip = "#{ip_raw[0]}.#{ip_raw[1]}.#{ip_raw[2]}." +
+			      "#{ip_raw[3]}"
+	    #join dht
+	    get_entry_point_id
+	    args = "-p #{@self_port} "                     +
+		   "--bs_ip #{@entry_point_ip} "           +
+		   "--bs_local_ip #{@entry_point_ip} "     +
+		   "--bs_port #{@entry_point_port} "       +
+		   "--bs_local_port #{@entry_point_port} " +
+		   "--bs_id #{@entry_point_id}"
+	end
+
+	cmd_str = "#{binary_name} " + args +
+		  " > #{stdout_name} 2> #{stderr_name}"
+
+	start_wrapped(cmd_str, stdout_name)
+
+	get_output
+	get_self_id
+    end
+
+    def start_wrapper_server
+	Thread.start do
+	    while @self_id.nil?
+		sleep 1
+	    end
+	    puts "# Starting wrapper server..."
+	    @server = TCPServer.new('', @self_wrapper_port)
+	    Thread.start do
+		loop do
+		    Thread.start(@server.accept) do |sock|
+			puts "# Wrapper client accepted"
+			handle_wrapper_client(sock)
+		    end
+		end
+	    end
+	    puts "# Wrapper server started"
+	end
+    end
+
+    def handle_wrapper_client(sock)
+	sock.write("#{@self_id}\n")
+    end
+
+    def get_entry_point_id
+	puts "# Connecting to #{@entry_point_ip}:#{@entry_point_wrapper_port}"
+	sock = TCPSocket.new(@entry_point_ip, @entry_point_wrapper_port)
+	@entry_point_id = sock.readline.chomp
+	puts "# Entry point id [#{@entry_point_id}]"
+    end
+
+    def put(key, value)
+	ttl = 600 # minutes
+	@wrapped_in.puts "storevalue #{key} #{value} #{ttl}"
+	get_output
+    end
+
+    def get(key)
+	@wrapped_in.puts "findvalue #{key}"
+	value = nil
+
+	loop do
+	    line = wrapped_getline
+	    if line.chomp =~ /^Values found for key.*/
+		# XXX: get just the first value
+		line = wrapped_getline.chomp
+		if line =~ /^1\.  (.*)$/ # yep, 2 white spaces
+		    value = $1
+		end
+	    elsif line.chomp == @wrapped_prompt_string
+		break
+	    end
+	end
+
+	return value
+    end
+
+    def get_self_id
+	@wrapped_in.puts "getinfo"
+	loop do
+	    line = wrapped_getline
+	    case line
+		when /.*Node_id: (.*)$/
+		    @self_id = $1
+		when "#{@wrapped_prompt_string}\n"
+		    break
+	    end
+	end
+	puts "# self_id = #{@self_id}"
+    end
+
+    def my_finalize
+	@wrapped_in.puts "exit"
+	super
+    end
+
+end
+
+def main(argv)
+
+    entry_point_host, entry_point_port, self_port = parse_arguments(argv)
+
+    begin
+	kad = KaddemoWrapper.new(entry_point_host, entry_point_port, self_port)
+	kad.run
+    rescue Interrupt
+	puts "Interrupt"
+    rescue
+	puts "Unhandled exception: #{$!.class}: #{$!}"
+	puts $!.backtrace.join("\n")
+    ensure
+	kad.my_finalize unless kad.nil?
+    end
+
+    puts "Bye =)"
+    return 0
+end
+
+# We're evil and kill our children:
+Process.setpgid(0,0)
+Thread.abort_on_exception = true
+exit main(ARGV)

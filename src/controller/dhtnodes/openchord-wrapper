@@ -1,0 +1,97 @@
+#!/usr/bin/ruby
+
+# WARNING:
+# This binary relies on a MODIFIED version of the openchord console that prints
+# "oc >\n" instead of "oc > " when waiting for user input.
+
+require 'fileutils'
+require 'socket'
+
+require 'generic-wrapper'
+
+class OpenchordWrapper < GenericWrapper
+    def initialize (entry_point_host, entry_point_port, self_port)
+
+	binary_name = "openchord-console"
+	super(entry_point_host, entry_point_port, self_port, binary_name,
+	      "oc >")
+
+	stdout_name = "stdout.txt"
+	stderr_name = "stderr.txt"
+	@self_id = nil
+	@entry_point_id = nil
+
+	cmd_str = "#{binary_name} > #{stdout_name} 2> #{stderr_name}"
+
+	start_wrapped(cmd_str, stdout_name)
+
+	get_output
+
+	if entry_point_host.nil?
+	    # create dht
+	    @wrapped_in.puts "joinN -port #{@self_port}"
+	else
+	    # join dht
+	    @wrapped_in.puts "joinN -port #{@self_port} -bootstrap " +
+			     "#{entry_point_host}:#{entry_point_port}"
+	end
+	get_output
+
+    end
+
+    def put(key, value)
+	@wrapped_in.puts "insertN -key #{key} -value #{value}"
+	get_output
+    end
+
+    def get(key)
+	@wrapped_in.puts "retrieveN -key #{key}"
+	value = nil
+
+	loop do
+	    line = wrapped_getline
+	    if line.chomp =~ /^Values associated with key.*/
+		line = wrapped_getline.chomp
+		if line != ""
+		    value = line
+		end
+	    elsif line.chomp == @wrapped_prompt_string
+		break
+	    end
+	end
+
+	return value
+    end
+
+    def my_finalize
+	@wrapped_in.puts "exit"
+	@wrapped_in.puts "y"
+	super
+    end
+end
+
+def main(argv)
+
+    entry_point_host, entry_point_port, self_port = parse_arguments(argv)
+
+    begin
+	ocw = OpenchordWrapper.new(entry_point_host, entry_point_port,
+				   self_port)
+	ocw.run
+    rescue Interrupt
+	puts "Interrupt"
+    rescue
+	puts "Unhandled exception: #{$!.class}: #{$!}"
+	puts $!.backtrace.join("\n")
+    ensure
+	ocw.my_finalize unless ocw.nil?
+    end
+
+    puts "Bye =)"
+    return 0
+end
+
+# We're evil and kill our children:
+Process.setpgid(0,0)
+Thread.abort_on_exception = true
+exit main(ARGV)

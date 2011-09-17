@@ -1,0 +1,24 @@
+# Expected result of this workload: SuccessRate metric is "1"
+
+nodes 5
+duration 600
+
+#############
+profile prof0
+
+join exact 5
+leave exact 590
+put fulldictionary 100 10
+get fulldictionary 100 250-350
+
+#############
+profile prof1
+
+join exact 150-240
+leave exact 590
+put none
+get fulldictionary 100 250-350
+
+#############
+default-profile prof1
+node 0 prof0

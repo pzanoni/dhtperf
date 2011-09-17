@@ -1,0 +1,55 @@
+# This workload is supposed to be a "proof of concept" that our tool can
+# reproduce node behavior that is similar to the behavior observed in real-life
+# file-sharing DHT applications (eMule, which uses KAD). We're not exactly
+# reproducing that behavior.
+# Join:
+# - The study "Long term study of peer behavior in the KAD DHT" suggests that
+#   the number of nodes in the eMule network is constant. So in our
+#   implementation, nodes join the network as soon as they can.
+# Leave:
+# - The same study suggests that the "session time" on the DHT follows the
+#   Weibull distribution, with shape 0.56 and scale 97.62. The units are in
+#   minutes, but we're going to use seconds. We've transposed "minutes" to
+#   "seconds" in our workload but we didn't change the timeouts and other
+#   time-based parameters of the DHTs experimented, so we're not exactly
+#   reproducing real-life behavior here. Still, if someone wants to reproduce
+#   real-life-like behavior, all that it is needed to to is to convert minutes
+#   to seconds.
+# Put:
+# - I still couldn't find any study doing real characterization of the "put"
+#   behavior, but in the eMule network, nodes republish their keys every four
+#   hours. We're going to use a total set of 100 keys.
+# Get:
+# - The study "Characterizing Traffic in Widely-deployed DHT" suggests that 95%
+#   of the keywords published are never retrieved. So, since only 100 different
+#   keys can be "put" on the DHT, nodes "get" only one of 5 keys. Since I
+#   couldn't find any study characterizing the frequency of "gets", I used a
+#   poisson distribution
+
+# number of nodes to be emulated:
+nodes 2
+duration 600
+
+#############
+profile prof1
+
+join now 10-50
+leave weibullrandom 1 0.56 97.62
+put interval 100 10 240 50-90
+get poissonrandom 5 100 60
+
+#############
+# This node needs to join first due to limitations in our implementation
+# Everyone will use him to join the DHT, so it must stay online during the
+# whole process
+profile prof2
+
+join exact 1
+leave none
+put interval 100 10 240 50-90
+get poissonrandom 5 100 60
+
+# associate nodes with profiles:
+default-profile prof1
+node 0 prof2
+

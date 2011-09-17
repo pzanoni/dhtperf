@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# vim:textwidth=0
+
+#if [ -z "$PAST_CONSOLE_DIR" ]; then
+#    echo "PAST_CONSOLE_DIR is not set"
+#    exit 1
+#fi
+
+PAST_CONSOLE_DIR="/usr/share/dhtperf/pastconsole/"
+
+JARS_DIR="$PAST_CONSOLE_DIR"
+
+PAST_CONSOLE_JAR="${JARS_DIR}/PastConsole.jar"
+PASTRY_JAR="${JARS_DIR}/pastry.jar"
+XMLPULL_JAR="${JARS_DIR}/xmlpull_1_1_3_4a.jar"
+XPP3_JAR="${JARS_DIR}/xpp3-1.1.3.4d_b2.jar"
+
+exec java -cp ${PAST_CONSOLE_JAR}:${PASTRY_JAR}:${XMLPULL_JAR}:${XPP3_JAR} PastConsole $@
